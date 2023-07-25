@@ -6,6 +6,18 @@
 	import SoundModule from './lib/SoundModule.svelte';
 	import { SoundHowl, soundDefaults } from './lib/SoundHowl';
 	import { setContext } from 'svelte';
+	import { useRegisterSW } from 'virtual:pwa-register/svelte';
+
+	const { offlineReady, needRefresh, updateServiceWorker: _updateServiceWorker } = useRegisterSW({});
+	const updateSW = async () => {
+		(await navigator.serviceWorker.getRegistration())?.update();
+		await _updateServiceWorker(true);
+		console.log('updated sw?');
+		// idk this might not even work
+		(await navigator.serviceWorker.getRegistration())?.active.addEventListener('statechange', function () {
+			if (this.state !== 'activating' && this.state !== 'activated') window.location.reload();
+		});
+	};
 
 	const config: Writable<Config> = writable({});
 	/** stores howls for the current loaded config */
@@ -76,6 +88,7 @@
 	let editMode = writable(false);
 	setContext('editMode', editMode);
 
+	let showSettingsModal = false;
 	let scale = 1;
 	try {
 		scale = parseFloat(localStorage.getItem('scale')) || 1;
@@ -89,7 +102,7 @@
 </script>
 
 <svelte:head>
-	<title>{title ? `${title} | ` : ''}Soundboard</title>
+	<title>{title ? `${title} | ` : ''}soundboard</title>
 </svelte:head>
 
 <svelte:window
@@ -102,15 +115,18 @@
 />
 
 <header>
-	<h1 title={unsavedChanges ? 'Unsaved changes' : ''}>{title || 'No project'}</h1>
+	<div>
+		<h1 title={unsavedChanges ? 'Unsaved changes' : ''}>{title || 'No project'}</h1>
+		{#if $needRefresh}
+			<button on:click={updateSW}>🔄️</button>
+		{/if}
+	</div>
 	<div>
 		<button on:click={openProject}>Open</button>
 		<button on:click={saveConfig} disabled={!configFileHandle}>Save</button>
 		<button on:click={() => (showModifySoundModal = true)} disabled={!configFileHandle}>New Sound</button>
 		<button on:click={() => ($editMode = !$editMode)}>{$editMode ? 'Hide' : 'Show'} Edit</button>
-		<!-- todo: settings page/modal for random things -->
-		<!-- todo: dropdown for choosing an audio output -->
-		<input type="range" title="UI Scale" bind:value={scale} min={0.8} max={2} step={0.1} style:width="8em" />
+		<button on:click={() => (showSettingsModal = true)}>Settings</button>
 		<button on:click={() => Howler.stop()}>🛑 All</button>
 	</div>
 </header>
@@ -132,6 +148,7 @@
 </main>
 
 <Modal
+	confirmation
 	bind:show={showModifySoundModal}
 	on:confirm={() => {
 		unsavedChanges = true;
@@ -184,7 +201,7 @@
 	</div>
 	<div>
 		<label for="volume">Volume:</label>
-		<input id="volume" type="number" placeholder={`${soundDefaults.volume}`} step="0.05" bind:value={modifySound.volume} />
+		<input id="volume" type="number" placeholder={`${soundDefaults.volume}`} step="0.05" min="0" max="1" bind:value={modifySound.volume} />
 	</div>
 	<small>todo: implement changing order, rn just go edit the json yourself</small>
 	<small>⚠️ Confirming will immediately cancel all currently playing sounds!</small>
@@ -195,13 +212,29 @@
 	</svelte:fragment>
 </Modal>
 
+<Modal bind:show={showSettingsModal}>
+	<div>
+		<label for="scale">UI Scale:</label>
+		<input id="scale" type="range" bind:value={scale} min={0.8} max={2} step={0.1} />
+		{scale}
+	</div>
+	<!-- todo: dropdown for choosing an audio output -->
+	<!-- svelte-ignore missing-declaration -->
+	<small
+		>{#if $offlineReady}offline ready | {/if}built {BUILD_TIME}</small
+	>
+	<div class="horizPanel" style:margin="var(--gap)">
+		<button on:click={updateSW}>Force update</button>
+	</div>
+</Modal>
+
 <style lang="scss">
 	header {
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
 		gap: var(--gap);
-		h1 {
+		& :first-child {
 			margin: 0;
 			margin-right: auto;
 			line-height: 1;

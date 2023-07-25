@@ -3,6 +3,7 @@
 	const dispatch = createEventDispatcher();
 
 	export let show = false;
+	export let confirmation = false;
 
 	let dialog: HTMLDialogElement;
 
@@ -29,8 +30,8 @@
 		<slot />
 		<div class="horizPanel">
 			<!-- svelte-ignore a11y-autofocus -->
-			<button autofocus type="submit" formnovalidate>Cancel</button>
-			<button type="submit" value="confirm">Confirm</button>
+			<button autofocus type="submit" formnovalidate>{confirmation ? 'Cancel' : 'Close'}</button>
+			{#if confirmation}<button type="submit" value="confirm">Confirm</button>{/if}
 			<slot name="buttons" />
 		</div>
 	</form>
@@ -56,9 +57,10 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		gap: var(--gap);
 
 		& > :global(*) {
-			// margin: 0.5em 0;
+			margin: 0;
 			width: 100%;
 		}
 	}
