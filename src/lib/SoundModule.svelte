@@ -16,10 +16,8 @@
 <!-- should i fix this weird behavior? yes. will i? wellllllll -->
 {#if howl}
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div class="card" role="button" tabindex="0" on:click={() => howl.play()}>
-		<h2>
-			{#if $playing}▶️ {/if}{sound.name}
-		</h2>
+	<div class="card" class:playing={$playing} role="button" tabindex="0" on:click={() => howl.play()}>
+		<h2>{sound.name}</h2>
 		<div class="buttons">
 			<button on:click|stopPropagation={() => howl.stop()}>🛑</button>
 			<button on:click|stopPropagation={() => howl.fadeStop()}>📉</button>
@@ -37,8 +35,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--gap);
+		border-radius: var(--gap);
 		cursor: pointer;
 		user-select: none;
+	}
+	.playing {
+		background: var(--card-active);
 	}
 	h2 {
 		margin: 0;

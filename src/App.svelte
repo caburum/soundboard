@@ -224,7 +224,7 @@
 		>{#if $offlineReady}offline ready | {/if}built {BUILD_TIME}</small
 	>
 	<div class="horizPanel" style:margin="var(--gap)">
-		<button on:click={updateSW}>Force update</button>
+		<button on:click|preventDefault={updateSW}>Force update</button>
 	</div>
 </Modal>
 

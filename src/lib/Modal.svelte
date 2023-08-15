@@ -42,7 +42,7 @@
 		border: none;
 		padding: 0;
 
-		border-radius: 8px;
+		border-radius: 0.25em;
 		/* background-color: var(--light); */
 		font-size: 17px;
 	}
